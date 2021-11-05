@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html {
+            height: 100vh;
+        }
+
+        body {
+            margin: 0;
+            height: 100%;
+            background-color: #ddd;
+        }
+
+        main {
+            height: 100%;
+            background-color: aquamarine;
+            display: grid;
+            justify-content: center;
+        }
+
+        .swipe-container {
+            touch-action: none;
+            width: 200px;
+            height: 200px;
+            background-color: var(--color, white);
+            --x: 0px;
+            --y: 0px;
+            transform: translate(var(--x, 0px), var(--y, 0px));
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div class="swipe-container"></div>
+        <div class="swipe-container" style="--color:green"></div>
+    </main>
+    <script>
+
+        const getPoint = e => ({ x: e.clientX, y: e.clientY })
+
+        function gestureStart(e) {
+            e.preventDefault()
+            if (e.target.matches('main')) return
+            e.target.setPointerCapture(e.pointerId)
+            e.target.style.transition = 'background-color 150ms'
+            e.target.dataset.pos = `${JSON.stringify({ x: e.clientX, y: e.clientY })}`
+        }
+        function gestureMove(e) {
+            e.preventDefault()
+            if (!e.target.dataset.pos) { return };
+            requestAnimationFrame(animate.bind(e))
+        }
+        function animate() {
+            const pos = JSON.parse(this.target.dataset.pos)
+            const currentPos = {
+                x: parseInt(this.target.style.getPropertyValue('--x')),
+                y: parseInt(this.target.style.getPropertyValue('--y'))
+            }
+            const vel = Math.sqrt((currentPos.x - (this.clientX - pos.x)) ** 2 + (currentPos.y - (this.clientY - pos.y)) ** 2)
+            console.log(Math.min((vel / 5) ** 2, 60))
+            this.target.style.backgroundColor = `hsl(${Math.min(vel, 50)},${40 + Math.min((vel / 5) ** 3, 60)}%,${40 + Math.min((vel / 10) ** 2, 60)}%)`
+            this.target.style.setProperty('--x', `${this.clientX - pos.x}px`)
+            this.target.style.setProperty('--y', `${this.clientY - pos.y}px`)
+        }
+        function gestureEnd(e) {
+            e.preventDefault()
+            if (e.target.matches('main')) return
+            e.target.releasePointerCapture(e.pointerId)
+            e.target.style.transition = 'transform 150ms, background-color 500ms'
+            e.target.style.backgroundColor = 'var(--color,white)'
+            e.target.dataset.pos = ''
+            e.target.style.setProperty('--x', `${0}px`)
+            e.target.style.setProperty('--y', `${0}px`)
+        }
+
+        document.querySelector('main').addEventListener('pointerdown', gestureStart)
+        document.querySelector('main').addEventListener('pointermove', gestureMove)
+        document.querySelector('main').addEventListener('pointerup', gestureEnd)
+
+    </script>
+</body>
+
+</html>
